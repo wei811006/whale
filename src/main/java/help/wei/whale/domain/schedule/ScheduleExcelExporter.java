@@ -12,6 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.List;
@@ -28,7 +29,7 @@ public class ScheduleExcelExporter {
     }
 
     public static String downloadExcelFilename(String month) {
-        return month + ".xlsx";
+        return month + "-01-" + System.currentTimeMillis() + ".xlsx";
     }
 
     public ByteArrayInputStream export(String month) {
@@ -117,13 +118,10 @@ public class ScheduleExcelExporter {
         Cell cShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 6);
         cShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*C\")");
 
-        Cell dShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 7);
-        dShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*D\")");
-
-        Cell eShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 8);
+        Cell eShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 7);
         eShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*E\")");
 
-        Cell fShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 9);
+        Cell fShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 8);
         fShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*F\")");
     }
 
@@ -179,9 +177,8 @@ public class ScheduleExcelExporter {
         shiftCell(workbook, headerDayOfWeek, dayCount + 4, "A班");
         shiftCell(workbook, headerDayOfWeek, dayCount + 5, "B班");
         shiftCell(workbook, headerDayOfWeek, dayCount + 6, "C班");
-        shiftCell(workbook, headerDayOfWeek, dayCount + 7, "D班");
-        shiftCell(workbook, headerDayOfWeek, dayCount + 8, "E班");
-        shiftCell(workbook, headerDayOfWeek, dayCount + 9, "F班");
+        shiftCell(workbook, headerDayOfWeek, dayCount + 7, "E班");
+        shiftCell(workbook, headerDayOfWeek, dayCount + 8, "F班");
     }
 
     /**
@@ -198,7 +195,6 @@ public class ScheduleExcelExporter {
         Row aShiftRow = countTitle(sheet, "A班人數", workbook);
         Row bShiftRow = countTitle(sheet, "B班人數", workbook);
         Row cShiftRow = countTitle(sheet, "C班人數", workbook);
-        Row dShiftRow = countTitle(sheet, "D班人數", workbook);
         Row eShiftRow = countTitle(sheet, "E班人數", workbook);
         Row fShiftRow = countTitle(sheet, "F班人數", workbook);
         Row leaveRow = countTitle(sheet, "休假人數", workbook);
@@ -209,7 +205,6 @@ public class ScheduleExcelExporter {
             countDetail(aShiftRow, firstDayOfMonth, rowNum, ",\"*A\")", workbook);
             countDetail(bShiftRow, firstDayOfMonth, rowNum, ",\"*B\")", workbook);
             countDetail(cShiftRow, firstDayOfMonth, rowNum, ",\"*C\")", workbook);
-            countDetail(dShiftRow, firstDayOfMonth, rowNum, ",\"*D\")", workbook);
             countDetail(eShiftRow, firstDayOfMonth, rowNum, ",\"*E\")", workbook);
             countDetail(fShiftRow, firstDayOfMonth, rowNum, ",\"*F\")", workbook);
             countDetail(leaveRow, firstDayOfMonth, rowNum, ",\"*休\")", workbook);

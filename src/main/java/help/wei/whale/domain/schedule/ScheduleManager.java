@@ -2,7 +2,6 @@ package help.wei.whale.domain.schedule;
 
 import help.wei.whale.domain.employee.DayOffType;
 import help.wei.whale.domain.employee.Employee;
-import help.wei.whale.domain.employee.EmployeeDayOff;
 import help.wei.whale.domain.employee.EmployeeManager;
 import help.wei.whale.domain.project.Project;
 import help.wei.whale.domain.project.ProjectManager;
@@ -10,13 +9,10 @@ import help.wei.whale.domain.project.ProjectShift;
 import help.wei.whale.domain.specialDay.WorkDayManager;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.swing.text.html.Option;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -43,6 +39,7 @@ public class ScheduleManager {
         long totalWorkerDays = getWorkDays(from);
 
         LocalDate today = from;
+        // 清除當月的排班
         cleanSchedule(from, lastDayOfMonth);
 
         // 在此處處理每一天的邏輯
@@ -50,13 +47,10 @@ public class ScheduleManager {
             log.info("Start creating a schedule on {}", today);
             LocalDate finalToday = today;
 
-            // 清除當天的排班
-
             Set<Schedule> schedules = new HashSet<>();
 
             // 取得當天所有的員工
-            Set<Employee> employees = this.employeeManager.findAllEmployed(today, today);
-
+            Set<Employee> employees = this.employeeManager.findAllEmployed(finalToday, finalToday);
 
             // 先安排當天不能上班的員工
             Set<Employee> employeesNeedDayOff = new HashSet<>();
@@ -82,14 +76,15 @@ public class ScheduleManager {
             employees.removeAll(employeesNeedDayOff);
             log.info("People available for work today is {}", employees.size());
 
-
             // 取得所有專案
-            List<Project> projects = this.projectManager.findAllActive(today, today);
+            List<Project> projects = this.projectManager.findAllActive(finalToday, finalToday);
             projects.forEach(project -> log.info("Project: {}", project.getName()));
 
             // 是否為上班日
-            boolean isWorkDay = this.workDayManager.isWorkDay(today);
+            boolean isWorkDay = this.workDayManager.isWorkDay(finalToday);
 
+            // 依照已經上班的天數排序
+            employees = employees.stream().sorted(Comparator.<Employee>comparingInt(employee -> calculateTotalWorkDays(employee, finalToday)).reversed()).collect(Collectors.toCollection(LinkedHashSet::new));
 
             while(!employees.isEmpty()) {
                 int employeeCount = employees.size();
@@ -98,13 +93,31 @@ public class ScheduleManager {
                     List<ProjectShift> projectShifts = project.getProjectShifts(today.getDayOfWeek());
                     for (ProjectShift projectShift: projectShifts) {
                         log.info("Assign employees to work on project {} with shift {}", project.getName(), projectShift.getShift());
+
                         Set<Employee> employeesForProject = new HashSet<>();
-                        for (Employee employee : employees) {
+                        Set<Employee> employeesLevel1 = employees.stream().filter(employee -> employee.getLevel().equals("一")).collect(java.util.stream.Collectors.toSet());
+                        Set<Employee> employeesLevel2 = employees.stream().filter(employee -> employee.getLevel().equals("二")).collect(java.util.stream.Collectors.toSet());
+
+                        boolean assigned = false;
+
+                        for (Employee employee : employeesLevel2) {
                             if (employee.haveShift(project.getName(), projectShift.getShift())) {
                                 log.info("Assign employee {} to work on project {} with shift {}", employee.getName(), project.getName(), projectShift.getShift());
                                 schedules.add(new Schedule(employee.getEmployeeId(), employee.getName(), finalToday, project.getName(), projectShift.getShift()));
                                 employeesForProject.add(employee);
+                                assigned = true;
                                 break;
+                            }
+                        }
+
+                        if (!assigned) {
+                            for (Employee employee : employeesLevel1) {
+                                if (employee.haveShift(project.getName(), projectShift.getShift())) {
+                                    log.info("Assign employee {} to work on project {} with shift {}", employee.getName(), project.getName(), projectShift.getShift());
+                                    schedules.add(new Schedule(employee.getEmployeeId(), employee.getName(), finalToday, project.getName(), projectShift.getShift()));
+                                    employeesForProject.add(employee);
+                                    break;
+                                }
                             }
                         }
                         employees.removeAll(employeesForProject);
@@ -115,8 +128,8 @@ public class ScheduleManager {
                 if (!isWorkDay) {
                     Set<Employee> employeesForDayOff = new HashSet<>();
                     employees.forEach(employee -> {
-                        log.info("Assign employee {} to {}", employee.getName(), DayOffType.REQUIRED_LEAVE.getChineseName());
-                        schedules.add(new Schedule(employee.getEmployeeId(), employee.getName(), finalToday, "", DayOffType.REQUIRED_LEAVE.getChineseName()));
+                        log.info("Assign employee {} to {}", employee.getName(), DayOffType.ROTATING_LEAVE.getChineseName());
+                        schedules.add(new Schedule(employee.getEmployeeId(), employee.getName(), finalToday, "", DayOffType.ROTATING_LEAVE.getChineseName()));
                         employeesForDayOff.add(employee);
                     });
                     employees.removeAll(employeesForDayOff);
@@ -180,12 +193,7 @@ public class ScheduleManager {
         List<Schedule> schedules = this.scheduleRepository.findRecentSchedulesForEmployee(employee.getEmployeeId(), today.minusDays(5));
         int count = 0;
         for (Schedule schedule: schedules) {
-            if (!(schedule.getShift().equals(DayOffType.REQUIRED_LEAVE.getChineseName()) ||
-                    schedule.getShift().equals(DayOffType.ANNUAL_LEAVE.getChineseName()) ||
-                    schedule.getShift().equals(DayOffType.ROTATING_LEAVE.getChineseName()))
-            ) {
-                count++;
-            }
+            if (Arrays.stream(DayOffType.values()).map(DayOffType::getChineseName).noneMatch(schedule.getShift()::equals)) count++;
         }
 
         if (count == 5) {
@@ -208,6 +216,22 @@ public class ScheduleManager {
                 .count();
 
         log.info("Work days: {}", count);
+        return count;
+    }
+
+    /**
+     * 計算已經上班的天數
+     * @param employee
+     * @return
+     */
+    private int calculateTotalWorkDays(Employee employee, LocalDate today) {
+        List<Schedule> schedules = this.scheduleRepository.findRecentSchedulesForEmployee(employee.getEmployeeId(), today.minusDays(today.getDayOfMonth()-1));
+        int count = 0;
+        for (Schedule schedule: schedules) {
+            if (Arrays.stream(DayOffType.values()).map(DayOffType::getChineseName).noneMatch(schedule.getShift()::equals)) {
+                count++;
+            }
+        }
         return count;
     }
 
