@@ -1,0 +1,11 @@
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  datasource:
+    url: jdbc:mysql://localhost:3306/whale
+    username: root
+    password: whale
+    driver-class-name: com.mysql.cj.jdbc.Driver
