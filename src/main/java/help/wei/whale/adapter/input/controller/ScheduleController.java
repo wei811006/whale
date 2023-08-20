@@ -1,6 +1,7 @@
 package help.wei.whale.adapter.input.controller;
 
 import help.wei.whale.adapter.input.controller.command.ScheduleCommand;
+import help.wei.whale.adapter.input.controller.command.UpdateScheduleCommand;
 import help.wei.whale.domain.schedule.ScheduleService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,12 @@ public class ScheduleController {
     public void schedule(@RequestBody ScheduleCommand command) {
         log.info("Schedule for month: {} ", command.getFrom());
         scheduleService.schedule(command.getFrom());
+    }
+
+    @PostMapping("/schedule/shift")
+    public void scheduleShift(@RequestBody UpdateScheduleCommand command) {
+        log.info("Update Schedule shift : {} ", command);
+        scheduleService.updateSchedule(command.getEmployeeID(), command.getProjectName(), command.getShift(), command.getDate());
     }
 
     @GetMapping("/schedule/download/{month}")

@@ -6,8 +6,11 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
+
+    Optional<Schedule> findByEmployeeIdAndDay(String employeeId, LocalDate day);
 
     @Query("SELECT DISTINCT s.employeeId FROM Schedule s WHERE s.day >= :startDay AND s.day <= :endDay ORDER BY s.employeeId ASC")
     List<String> findDistinctEmployeeIdByDayBetween(LocalDate startDay, LocalDate endDay);

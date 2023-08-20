@@ -53,4 +53,8 @@ public class Schedule {
         this.shift = shift;
     }
 
+    public void updateShift(String projectName, String shift) {
+        this.projectName = projectName;
+        this.shift = shift;
+    }
 }

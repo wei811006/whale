@@ -1,27 +1,20 @@
 package help.wei.whale.service;
 
+import help.wei.whale.domain.employee.Employee;
 import help.wei.whale.domain.employee.EmployeeManager;
 import help.wei.whale.domain.employee.EmployeeRepository;
+import help.wei.whale.domain.project.Project;
 import help.wei.whale.domain.project.ProjectManager;
 import help.wei.whale.domain.project.ProjectRepository;
-import help.wei.whale.domain.schedule.ScheduleExcelExporter;
-import help.wei.whale.domain.schedule.ScheduleManager;
-import help.wei.whale.domain.schedule.ScheduleRepository;
-import help.wei.whale.domain.schedule.ScheduleService;
+import help.wei.whale.domain.schedule.*;
 import help.wei.whale.domain.specialDay.WorkDayManager;
 import help.wei.whale.domain.specialDay.WorkDayRepository;
 import jakarta.transaction.Transactional;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 public class ScheduleServiceImpl implements ScheduleService {
@@ -58,6 +51,21 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         ScheduleManager scheduleManager = new ScheduleManager(scheduleRepository, employeeManager, projectManager, workDayManager);
         scheduleManager.schedule(form);
+    }
+
+    @Override
+    public void updateSchedule(String employeeId, String projectName, String shift, LocalDate date) {
+        // check if employeeId, projectId, shift, date are valid
+        Employee employee = employeeRepository.findById(employeeId).orElseThrow();
+
+        Optional<Schedule> schedule = scheduleRepository.findByEmployeeIdAndDay(employeeId, date);
+        if (schedule.isEmpty()) {
+            schedule = Optional.of(new Schedule(employeeId, employee.getName(), date, projectName, shift));
+        }
+        else {
+            schedule.get().updateShift(projectName, shift);
+        }
+        this.scheduleRepository.save(schedule.get());
     }
 
     @Override

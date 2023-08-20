@@ -7,6 +7,8 @@ public interface ScheduleService {
 
     void schedule(LocalDate form);
 
+    void updateSchedule(String employeeId, String projectName, String shift, LocalDate date);
+
     ByteArrayInputStream downloadExcel(String month);
 
     String downloadExcelFilename(String month);
