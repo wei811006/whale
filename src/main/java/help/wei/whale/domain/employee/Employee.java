@@ -1,12 +1,10 @@
 package help.wei.whale.domain.employee;
 
-import help.wei.whale.domain.project.ProjectShift;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.NonNull;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -19,6 +17,9 @@ import java.util.Set;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
+@Builder
+@NoArgsConstructor(access = AccessLevel.PRIVATE) // for JPA
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Employee {
 
     @LastModifiedDate
@@ -37,6 +38,9 @@ public class Employee {
     private String name;
 
     @Getter
+    private String level;
+
+    @Getter
     private LocalDate onboardingDate;
 
     @Getter
@@ -47,16 +51,6 @@ public class Employee {
 
     @ElementCollection
     private Set<EmployeeShift> employeeShifts = new HashSet<>();
-
-    // for JPA
-    private Employee() {}
-
-    public Employee(String employeeId, String name, LocalDate onboardingDate, LocalDate offBoardingDate) {
-        this.employeeId = employeeId;
-        this.name = name;
-        this.onboardingDate = onboardingDate;
-        this.offBoardingDate = offBoardingDate;
-    }
 
     public void dayOff(Set<EmployeeDayOff> dayOffs) {
         dayOffTypes.addAll(dayOffs);

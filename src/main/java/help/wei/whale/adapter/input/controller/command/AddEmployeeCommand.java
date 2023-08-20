@@ -14,6 +14,8 @@ public class AddEmployeeCommand {
 
     private String name;
 
+    private String level;
+
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate onboardingDate;
 

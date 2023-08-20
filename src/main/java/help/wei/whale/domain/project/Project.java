@@ -11,6 +11,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
@@ -67,8 +68,8 @@ public class Project {
         return id;
     }
 
-    public List<ProjectShift> getProjectShifts() {
-        List<ProjectShift> cloneShifts = new ArrayList<>(projectShifts);
+    public List<ProjectShift> getProjectShifts(DayOfWeek dayOfWeek) {
+        List<ProjectShift> cloneShifts = projectShifts.stream().filter(projectShift -> projectShift.getShiftDay().equals(dayOfWeek)).collect(Collectors.toList());
         cloneShifts.sort(Comparator.comparingLong(ProjectShift::getPriority));
         return cloneShifts;
     }

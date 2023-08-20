@@ -38,7 +38,7 @@ public class EmployeeController {
     @PostMapping("/employee")
     public void newEmployee(@NotNull @RequestBody AddEmployeeCommand command) {
         log.info("newEmployee: command={}", command);
-        employeeService.newEmployee(command.getEmployeeID(), command.getName(), command.getOnboardingDate(), command.getOffboardingDate());
+        employeeService.newEmployee(command.getEmployeeID(), command.getName(), command.getLevel(), command.getOnboardingDate(), command.getOffboardingDate());
     }
 
     @PutMapping("/employee/{id}")

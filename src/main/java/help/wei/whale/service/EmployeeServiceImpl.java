@@ -26,8 +26,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public void newEmployee(String id, String name, LocalDate onboardingDate, LocalDate offboardingDate) {
-        Employee employee = new Employee(id, name, onboardingDate, offboardingDate);
+    public void newEmployee(String id, String name, String level, LocalDate onboardingDate, LocalDate offBoardingDate) {
+        Employee employee = Employee.builder()
+                .employeeId(id)
+                .name(name)
+                .level(level)
+                .onboardingDate(onboardingDate)
+                .offBoardingDate(offBoardingDate)
+                .build();
         employeeRepository.save(employee);
     }
 

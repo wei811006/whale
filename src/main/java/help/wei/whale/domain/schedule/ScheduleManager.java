@@ -95,17 +95,18 @@ public class ScheduleManager {
                 int employeeCount = employees.size();
                 // 依照專案分配員工
                 for (Project project: projects) {
-                    List<ProjectShift> projectShifts = project.getProjectShifts();
+                    List<ProjectShift> projectShifts = project.getProjectShifts(today.getDayOfWeek());
                     for (ProjectShift projectShift: projectShifts) {
-
+                        log.info("Assign employees to work on project {} with shift {}", project.getName(), projectShift.getShift());
                         Set<Employee> employeesForProject = new HashSet<>();
-                        employees.forEach(employee -> {
+                        for (Employee employee : employees) {
                             if (employee.haveShift(project.getName(), projectShift.getShift())) {
                                 log.info("Assign employee {} to work on project {} with shift {}", employee.getName(), project.getName(), projectShift.getShift());
                                 schedules.add(new Schedule(employee.getEmployeeId(), employee.getName(), finalToday, project.getName(), projectShift.getShift()));
                                 employeesForProject.add(employee);
+                                break;
                             }
-                        });
+                        }
                         employees.removeAll(employeesForProject);
                     }
                 }
@@ -115,7 +116,7 @@ public class ScheduleManager {
                     Set<Employee> employeesForDayOff = new HashSet<>();
                     employees.forEach(employee -> {
                         log.info("Assign employee {} to {}", employee.getName(), DayOffType.REQUIRED_LEAVE.getChineseName());
-                        schedules.add(new Schedule(employee.getEmployeeId(), employee.getName(), finalToday, "", DayOffType.REQUIRED_LEAVE.name()));
+                        schedules.add(new Schedule(employee.getEmployeeId(), employee.getName(), finalToday, "", DayOffType.REQUIRED_LEAVE.getChineseName()));
                         employeesForDayOff.add(employee);
                     });
                     employees.removeAll(employeesForDayOff);
@@ -179,13 +180,16 @@ public class ScheduleManager {
         List<Schedule> schedules = this.scheduleRepository.findRecentSchedulesForEmployee(employee.getEmployeeId(), today.minusDays(5));
         int count = 0;
         for (Schedule schedule: schedules) {
-            if (!(schedule.getShift().equals(DayOffType.REQUIRED_LEAVE.getChineseName()) || schedule.getShift().equals(DayOffType.ANNUAL_LEAVE.getChineseName()))) {
+            if (!(schedule.getShift().equals(DayOffType.REQUIRED_LEAVE.getChineseName()) ||
+                    schedule.getShift().equals(DayOffType.ANNUAL_LEAVE.getChineseName()) ||
+                    schedule.getShift().equals(DayOffType.ROTATING_LEAVE.getChineseName()))
+            ) {
                 count++;
             }
         }
 
         if (count == 5) {
-            return Optional.of(new Schedule(employee.getEmployeeId(), employee.getName(), today, "", DayOffType.REQUIRED_LEAVE.getChineseName()));
+            return Optional.of(new Schedule(employee.getEmployeeId(), employee.getName(), today, "", DayOffType.ROTATING_LEAVE.getChineseName()));
         }
         return Optional.empty();
     }

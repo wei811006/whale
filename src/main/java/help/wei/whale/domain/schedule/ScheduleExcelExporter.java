@@ -1,5 +1,6 @@
 package help.wei.whale.domain.schedule;
 
+import help.wei.whale.domain.employee.DayOffType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -79,7 +80,20 @@ public class ScheduleExcelExporter {
         for (Schedule schedule : schedules) {
             Cell cell = row.createCell(schedule.getDay().getDayOfMonth());
             cell.setCellValue(schedule.getProjectName() + " " + schedule.getShift());
-            cell.setCellStyle(centeredStyle(workbook));
+
+            if (schedule.getShift().equals(DayOffType.ROTATING_LEAVE.getChineseName())) {
+                // 輪休樣式
+                cell.setCellStyle(rotatingLeaveStyle(workbook));
+            }
+            else if (schedule.getShift().equals(DayOffType.REQUIRED_LEAVE.getChineseName())) {
+                // 必休樣式
+                cell.setCellStyle(requireLeaveStyle(workbook));
+            }
+            else {
+                // 預設樣式
+                cell.setCellStyle(centeredStyle(workbook));
+            }
+
         }
 
         // 統計天數
@@ -95,22 +109,22 @@ public class ScheduleExcelExporter {
         workDayCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"<>*休*\")");
 
         Cell aShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 4);
-        aShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*A*\")");
+        aShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*A\")");
 
         Cell bShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 5);
-        bShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*B*\")");
+        bShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*B\")");
 
         Cell cShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 6);
-        cShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*C*\")");
+        cShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*C\")");
 
         Cell dShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 7);
-        dShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*D*\")");
+        dShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*D\")");
 
         Cell eShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 8);
-        eShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*E*\")");
+        eShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*E\")");
 
         Cell fShiftCell = row.createCell(lastDayOfMonth.getDayOfMonth() + 9);
-        fShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*F*\")");
+        fShiftCell.setCellFormula("COUNTIFS(B"+ (rowNum+1) + ":" + convertToExcelColumn(lastDayOfMonth.getDayOfMonth() + 1) + (rowNum+1) +",\"*F\")");
     }
 
     /**
@@ -192,13 +206,13 @@ public class ScheduleExcelExporter {
         while (!firstDayOfMonth.isAfter(lastDayOfMonth)) {
 
             // 計算A班人數
-            countDetail(aShiftRow, firstDayOfMonth, rowNum, ",\"*A*\")", workbook);
-            countDetail(bShiftRow, firstDayOfMonth, rowNum, ",\"*B*\")", workbook);
-            countDetail(cShiftRow, firstDayOfMonth, rowNum, ",\"*C*\")", workbook);
-            countDetail(dShiftRow, firstDayOfMonth, rowNum, ",\"*D*\")", workbook);
-            countDetail(eShiftRow, firstDayOfMonth, rowNum, ",\"*E*\")", workbook);
-            countDetail(fShiftRow, firstDayOfMonth, rowNum, ",\"*F*\")", workbook);
-            countDetail(leaveRow, firstDayOfMonth, rowNum, ",\"*休*\")", workbook);
+            countDetail(aShiftRow, firstDayOfMonth, rowNum, ",\"*A\")", workbook);
+            countDetail(bShiftRow, firstDayOfMonth, rowNum, ",\"*B\")", workbook);
+            countDetail(cShiftRow, firstDayOfMonth, rowNum, ",\"*C\")", workbook);
+            countDetail(dShiftRow, firstDayOfMonth, rowNum, ",\"*D\")", workbook);
+            countDetail(eShiftRow, firstDayOfMonth, rowNum, ",\"*E\")", workbook);
+            countDetail(fShiftRow, firstDayOfMonth, rowNum, ",\"*F\")", workbook);
+            countDetail(leaveRow, firstDayOfMonth, rowNum, ",\"*休\")", workbook);
 
             firstDayOfMonth = firstDayOfMonth.plusDays(1);
         }
@@ -240,6 +254,11 @@ public class ScheduleExcelExporter {
         cell.setCellStyle(centeredStyle(workbook));
     }
 
+    /**
+     * 建立置中樣式
+     * @param workbook
+     * @return
+     */
     private static CellStyle centeredStyle(Workbook workbook) {
         CellStyle centeredStyle = workbook.createCellStyle();
         centeredStyle.setAlignment(HorizontalAlignment.CENTER);
@@ -247,6 +266,43 @@ public class ScheduleExcelExporter {
         return centeredStyle;
     }
 
+    /**
+     * 建立輪休樣式
+     * @param workbook
+     * @return
+     */
+    private static CellStyle rotatingLeaveStyle(Workbook workbook) {
+        CellStyle rotatingLeaveStyle = workbook.createCellStyle();
+        rotatingLeaveStyle.setAlignment(HorizontalAlignment.CENTER);
+        rotatingLeaveStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        Font font = workbook.createFont();
+        font.setColor(IndexedColors.RED.getIndex());
+        rotatingLeaveStyle.setFont(font);
+
+        return rotatingLeaveStyle;
+    }
+
+    /**
+     * 建立必休樣式
+     * @param workbook
+     * @return
+     */
+    private static CellStyle requireLeaveStyle(Workbook workbook) {
+        CellStyle requireLeaveStyle = workbook.createCellStyle();
+        requireLeaveStyle.setAlignment(HorizontalAlignment.CENTER);
+        requireLeaveStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        requireLeaveStyle.setFillForegroundColor(IndexedColors.ORANGE.getIndex());
+        requireLeaveStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        return requireLeaveStyle;
+    }
+
+    /**
+     * 建立星期樣式
+     * @param workbook
+     * @return
+     */
     private static CellStyle dayOfWeekCellCellStyle(Workbook workbook) {
         CellStyle dayOfWeekCellCellStyle = workbook.createCellStyle();
 
@@ -255,9 +311,9 @@ public class ScheduleExcelExporter {
         dayOfWeekCellCellStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
         dayOfWeekCellCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-        Font dayOfWeekCellFont = workbook.createFont();
-        dayOfWeekCellFont.setColor(IndexedColors.RED.getIndex());
-        dayOfWeekCellCellStyle.setFont(dayOfWeekCellFont);
+        Font font = workbook.createFont();
+        font.setColor(IndexedColors.RED.getIndex());
+        dayOfWeekCellCellStyle.setFont(font);
 
         return dayOfWeekCellCellStyle;
     }

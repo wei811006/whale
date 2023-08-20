@@ -6,7 +6,7 @@ import java.util.Set;
 
 public interface EmployeeService {
 
-    void newEmployee(String employeeId, String name, LocalDate onboardingDate, LocalDate offboardingDate);
+    void newEmployee(String employeeId, String name, String level, LocalDate onboardingDate, LocalDate offboardingDate);
 
     void updateEmployee(String employeeId, String name, LocalDate onboardingDate, LocalDate offboardingDate);
 
